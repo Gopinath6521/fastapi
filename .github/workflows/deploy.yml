@@ -20,7 +20,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y python3-pip curl jq git docker.io
+          sudo apt-get install -y python3-pip curl jq git
           pip3 install awscli
 
       - name: Log in to AWS ECR
