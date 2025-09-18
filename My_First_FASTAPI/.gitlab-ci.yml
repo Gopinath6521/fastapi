@@ -1,0 +1,50 @@
+stages:
+  - build
+  - push
+  - deploy
+
+variables:
+  AWS_DEFAULT_REGION: "${REGION}"   # Change to your AWS region
+  ECR_REGISTRY: "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com"
+  ECR_REPOSITORY: "fastapi-app"      # Change if you use a different repo name
+  IMAGE_TAG: "$CI_COMMIT_SHORT_SHA"
+
+before_script:
+  - apk add --no-cache python3 py3-pip curl jq bash git docker
+  - pip install awscli
+
+# --- Build Docker Image ---
+build_image:
+  stage: build
+  script:
+    - echo "Logging in to AWS ECR..."
+    - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $ECR_REGISTRY
+    - echo "Building Docker image..."
+    - docker build -t $ECR_REPOSITORY:$IMAGE_TAG .
+    - docker tag $ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+  artifacts:
+    expire_in: 1h
+    paths:
+      - .
+
+# --- Push Docker Image to ECR ---
+push_image:
+  stage: push
+  script:
+    - echo "Pushing Docker image to ECR..."
+    - docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+
+# --- Deploy to Kubernetes ---
+deploy_to_k8s:
+  stage: deploy
+  image: bitnami/kubectl:latest
+  script:
+    - echo "Updating kubeconfig for EKS..."
+    - aws eks update-kubeconfig --name fastapi-cluster-18sep --region $AWS_DEFAULT_REGION
+    - echo "Updating FastAPI deployment image..."
+    - kubectl set image deployment/fastapi-deployment fastapi-container=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+    - echo "Waiting for rollout..."
+    - kubectl rollout status deployment/fastapi-deployment
+  environment:
+    name: production
+    url: http://your-service-dns

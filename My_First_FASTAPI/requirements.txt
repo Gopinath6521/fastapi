@@ -1,0 +1,10 @@
+fastapi
+uvicorn[standard]
+requests
+azure-identity
+azure-mgmt-compute
+azure-mgmt-network
+azure-mgmt-resource
+boto3
+python-dotenv
+azure-keyvault-secrets

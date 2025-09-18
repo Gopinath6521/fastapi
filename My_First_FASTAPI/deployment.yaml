@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fastapi-deployment
+  labels:
+    app: fastapi
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: fastapi
+  template:
+    metadata:
+      labels:
+        app: fastapi
+    spec:
+      containers:
+      - name: fastapi
+        image: 943145900314.dkr.ecr.us-east-1.amazonaws.com/fastapi-app:latest
+        imagePullPolicy: Always
+        env:
+          - name: TERRAFORM_DIR
+            value: "/app/terraform/Azure/windows_vm"
+          - name: TERRAFORM_DIR_AWS
+            value: "/app/terraform/AWS/windows_ec2" 
+        ports:
+          - containerPort: 8000
