@@ -79,17 +79,20 @@ jobs:
       - name: Get Service URL
         run: |
             echo "Fetching LoadBalancer URL..."
-            # Wait until the EXTERNAL-IP/DNS is assigned
             for i in {1..30}; do
             URL=$(kubectl get svc fastapi-service -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')
             if [ -n "$URL" ]; then
-                echo "FastAPI is available at: http://$URL"
+                echo "===================================="
+                echo "✅ FastAPI Service is available at:"
+                echo "http://$URL"
+                echo "===================================="
                 echo "FASTAPI_URL=http://$URL" >> $GITHUB_ENV
                 break
             fi
             echo "Waiting for LoadBalancer to get an external IP/DNS... ($i/30)"
             sleep 20
             done
+
 
 
 
