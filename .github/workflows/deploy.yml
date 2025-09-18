@@ -62,7 +62,17 @@ jobs:
 
       - name: Deploy FastAPI to Kubernetes
         run: |
-          IMAGE_TAG=${GITHUB_SHA::7}
-          ECR_REGISTRY=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
-          kubectl set image deployment/fastapi-deployment fastapi-container=$ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:$IMAGE_TAG
-          kubectl rollout status deployment/fastapi-deployment
+            IMAGE_TAG=${GITHUB_SHA::7}
+            ECR_REGISTRY=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
+            
+            # If deployment doesn't exist, create it
+            if ! kubectl get deployment fastapi-deployment > /dev/null 2>&1; then
+            echo "Deployment not found, creating it..."
+            kubectl apply -f My_First_FASTAPI/deployment.yaml
+            kubectl apply -f My_First_FASTAPI/service.yaml
+            fi
+
+            # Update image (use correct container name)
+            kubectl set image deployment/fastapi-deployment fastapi=$ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:$IMAGE_TAG
+            kubectl rollout status deployment/fastapi-deployment
+
